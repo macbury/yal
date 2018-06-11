@@ -1,4 +1,3 @@
-const int JSON_BUFFER_SIZE = JSON_OBJECT_SIZE(10);
 const char* CMD_ON = "ON";
 const char* CMD_OFF = "OFF";
 
@@ -105,6 +104,31 @@ void sendCurrentState() {
   client.publish(MQTT_TOPIC_STATE, buffer, true);
 }
 
+void setEffectByName(String name) {
+  if (name != currentState.effect->name()) {
+    Effect * targetEffect = NULL;
+    Serial.print("Changing effect to: ");
+    if (name == "Manual") {
+      Serial.println("Manual");
+      targetEffect = new ManualEffect();
+    } else  if (name == "Failed") {
+      Serial.println("Failed");
+      targetEffect = new FailedEffect();
+    } else if (name == "Running") {
+      Serial.println("Running");
+      targetEffect = new RunningEffect();
+    } else if (name == "Success") {
+      Serial.println("Success");
+      targetEffect = new SuccessEffect();
+    } else {
+      Serial.println("Clear");
+      targetEffect = new ClearEffect();
+    }
+    transitToEffect(currentState.effect, targetEffect, 1000);
+    delete currentState.effect;
+    currentState.effect = targetEffect;
+  }
+}
 /**
  * Parse out everything about action
  */
@@ -135,29 +159,7 @@ boolean processJson(char * rawJson) {
   }
 
   if (root.containsKey("effect")) {
-    if (root["effect"] != currentState.effect->name()) {
-      Effect * targetEffect = NULL;
-      Serial.print("Changing effect to: ");
-      if (root["effect"] == "Manual") {
-        Serial.println("Manual");
-        targetEffect = new ManualEffect();
-      } else  if (root["effect"] == "Failed") {
-        Serial.println("Failed");
-        targetEffect = new FailedEffect();
-      } else if (root["effect"] == "Running") {
-        Serial.println("Running");
-        targetEffect = new RunningEffect();
-      } else if (root["effect"] == "Success") {
-        Serial.println("Success");
-        targetEffect = new SuccessEffect();
-      } else {
-        Serial.println("Clear");
-        targetEffect = new ClearEffect();
-      }
-      transitToEffect(currentState.effect, targetEffect, 1000);
-      delete currentState.effect;
-      currentState.effect = targetEffect;
-    }
+    setEffectByName(root["effect"]);
   }
 
   return true;

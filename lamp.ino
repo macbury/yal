@@ -3,7 +3,8 @@
 #include <Adafruit_NeoPixel.h>
 #include <ArduinoJson.h>
 #include <ESP8266WiFi.h>
-#include <ESP8266HTTPClient.h>
+#include <ESP8266WiFiMulti.h>
+#include <WiFiClientSecure.h>
 #include <PubSubClient.h>
 #include <ESP8266mDNS.h>
 #include <WiFiUdp.h>
@@ -12,6 +13,7 @@
 #include "credentials.h"
 
 const byte TICK_DELAY = 33;
+const int JSON_BUFFER_SIZE = JSON_OBJECT_SIZE(10);
 
 WiFiClient espClient;
 PubSubClient client(espClient);
@@ -59,11 +61,13 @@ void setup() {
   };
 }
 
+
 void loop() {
   if (client.connected()) {
     client.loop();
     ArduinoOTA.handle();
     handleLight();
+    //updateStatus();
   } else {
     if (ensureMqttConnection()) {
       onConnect();
